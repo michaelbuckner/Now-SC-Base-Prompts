@@ -19,3 +19,4 @@ Finish the document with the following sections:
 - Risks – Key risks that could impact success and possible mitigation strategies.
  
 Use crisp, structured formatting (e.g., bullet points where helpful), and aim for clarity, alignment, and actionability in every section.
+Store the PRD as markdown in \99_Assets
