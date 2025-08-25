@@ -7,3 +7,10 @@ Replace the {{…}} tokens directly, and generate <tr>…</tr> rows inside the t
 Set {{OVERALL_STATUS}} to green, yellow, or red. The text label goes in {{OVERALL_STATUS_TEXT}}.
 
 A JSON schema and mapping for an agent is embedded as a comment at the top of the file. 
+
+How to set the status color:
+
+On the <body> tag, set:
+class="status-{{OVERALL_STATUS}}" where OVERALL_STATUS = green | yellow | red.
+Optionally add dense for extra-long content:
+class="status-red dense"
