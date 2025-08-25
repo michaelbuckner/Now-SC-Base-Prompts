@@ -3,26 +3,32 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ServiceNow POC Status – Daily/Weekly Update</title>
+<title>ServiceNow POC Status – Compact Screenshot View</title>
 
 <!--
-LLM/Agent instructions (schema to fill; replace {{...}} tokens and generate <tr> rows under the tbody elements by id):
+LLM/Agent fill instructions (replace tokens {{...}} and generate table rows under the tbody elements by id).
+Designed at 1200x800 and auto-scales to fit any screen (no scrolling). Keep text concise.
+Schema:
 {
   "report_date": "YYYY-MM-DD",
-  "period": "Daily | Weekly",
+  "period": "Daily|Weekly",
   "project_name": "string",
   "owner": "string",
-  "overall_status": "green | yellow | red",
-  "executive_summary": "1–3 bullets or short paragraph",
-  "risks": [{"title":"", "severity":"H|M|L", "impact":"", "mitigation":"", "owner":"", "due": "YYYY-MM-DD", "status":"open|mitigated"}],
-  "blockers": [{"item":"", "owner":"", "eta":"YYYY-MM-DD"}],
-  "action_items": [{"item":"", "owner":"", "due":"YYYY-MM-DD", "status":"open|in-progress|done"}],
-  "milestones": [{"name":"", "target":"YYYY-MM-DD", "eta":"YYYY-MM-DD", "status":"on-track|at-risk|slipped"}],
-  "metrics": [{"name":"", "value":"", "target":"", "note":""}],
-  "decisions": [{"decision":"", "date":"YYYY-MM-DD", "owner":"", "note":""}],
-  "dependencies": [{"on":"", "owner":"", "status":""}],
-  "escalations": [{"issue":"", "to":"", "date":"YYYY-MM-DD", "note":""}],
-  "notes": ["free text", "..."]
+  "overall_status": "green|yellow|red",
+  "overall_status_text": "On Track|At Risk|Off Track",
+  "executive_summary": "1-3 short bullets or brief paragraph",
+  "environments": "comma list",
+  "use_cases": "comma list",
+  "success_criteria": "comma list",
+  "stakeholders": "comma list",
+  "risks_rows": "<tr>...</tr> (max 3)",
+  "actions_rows": "<tr>...</tr> (max 4)",
+  "blockers_rows": "<tr>...</tr> (max 3)",
+  "milestones_rows": "<tr>...</tr> (max 3)",
+  "metrics_rows": "<tr>...</tr> (max 3)",
+  "decisions_rows": "<tr>...</tr> (max 3)",
+  "dependencies_rows": "<tr>...</tr> (max 3)",
+  "escalations_rows": "<tr>...</tr> (max 2)"
 }
 -->
 
@@ -36,197 +42,203 @@ LLM/Agent instructions (schema to fill; replace {{...}} tokens and generate <tr>
     --sn-surface-2:#0e2637;
     --sn-text:#e6f0f0;
     --sn-muted:#9fb3c8;
-    --radius:16px;
+
+    /* Canvas base size and autoscale for no-scroll screenshots */
+    --w:1200px;
+    --h:800px;
+    --scale: calc(min(100vw / var(--w), 100vh / var(--h)));
   }
-  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
   body{
-    margin:0;
-    font: 14px/1.5 Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font: 13px/1.4 Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color:var(--sn-text);
     background: radial-gradient(1200px 600px at 20% -10%, #11354f, transparent),
                 radial-gradient(900px 500px at 100% 0%, #0e2840, transparent),
                 var(--sn-bg);
-    padding:32px;
+    display:flex;align-items:center;justify-content:center;
   }
-  .wrap{max-width:1080px;margin:auto}
-  .card{
-    background: linear-gradient(180deg, var(--sn-surface), var(--sn-surface-2));
-    border:1px solid #143248;
-    border-radius:var(--radius);
-    box-shadow:0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.04);
+  .canvas{
+    width:var(--w);height:var(--h);
+    transform:scale(var(--scale));
+    transform-origin: top left;
+    box-shadow:0 30px 70px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+    border-radius:14px;
     overflow:hidden;
+    border:1px solid #143248;
+    background: linear-gradient(180deg, var(--sn-surface), var(--sn-surface-2));
   }
+  .brand-bar{height:4px;background:linear-gradient(90deg,var(--sn-green), #4df3b7 60%, rgba(77,243,183,.35))}
   header{
-    display:flex;align-items:center;gap:14px;
-    padding:20px 24px;border-bottom:1px solid #143248;
-    background: linear-gradient(90deg, rgba(0,167,108,.2), transparent);
+    display:flex;align-items:center;gap:12px;
+    padding:14px 18px;border-bottom:1px solid #143248;
+    background: linear-gradient(90deg, rgba(0,167,108,.18), transparent);
   }
-  .sn-dot{width:10px;height:10px;border-radius:10px;background:var(--sn-green);box-shadow:0 0 18px rgba(0,167,108,.9)}
-  .title{font-size:20px;font-weight:700;letter-spacing:.2px}
+  .sn-dot{width:10px;height:10px;border-radius:10px;background:var(--sn-green);box-shadow:0 0 14px rgba(0,167,108,.9)}
+  .title{font-size:18px;font-weight:700}
   .meta{margin-left:auto;color:var(--sn-muted);font-size:12px}
-  .section{padding:18px 24px;border-top:1px solid #143248}
-  .section h3{margin:0 0 8px;font-size:14px;text-transform:uppercase;letter-spacing:.8px;color:#d7e6eb}
-  .badge{
-    display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;
-    font-weight:600;font-size:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)
+
+  /* Grid layout for compact single-screen */
+  .grid{
+    display:grid;
+    grid-template-columns: 2fr 1.2fr 1fr;
+    grid-template-rows: auto 1fr 1fr;
+    grid-template-areas:
+      "status glance glance"
+      "risks  risks  sideA"
+      "milest metrics sideB";
+    gap:10px;
+    padding:10px 12px 12px;
+    height:calc(var(--h) - 64px); /* minus header + brand bar */
+    box-sizing:border-box;
   }
+  .card{
+    border:1px solid #143248;border-radius:12px;overflow:hidden;
+    background:rgba(255,255,255,.02);
+  }
+  .section{padding:10px 12px}
+  .section h3{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#d7e6eb}
+  .callout{border-left:4px solid var(--sn-green);background:rgba(0,0,0,.14);padding:8px 10px;border-radius:8px}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-weight:600;font-size:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)}
   .status-dot{width:10px;height:10px;border-radius:50%}
-  .green{background:var(--sn-green)}
-  .yellow{background:var(--sn-yellow)}
-  .red{background:var(--sn-red)}
-  .grid{display:grid;gap:14px}
-  @media (min-width:900px){ .grid.two{grid-template-columns:1.1fr .9fr} }
-  .callout{
-    border-left:4px solid var(--sn-green);
-    background:rgba(0,0,0,.14);
-    padding:12px 14px;border-radius:10px
-  }
-  .list{margin:0;padding-left:18px}
-  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #143248;border-radius:12px;overflow:hidden}
-  th,td{padding:10px 12px;text-align:left}
-  th{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:#cfe0e6;background:#133149}
+  .green{background:var(--sn-green)} .yellow{background:var(--sn-yellow)} .red{background:var(--sn-red)}
+
+  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #143248;border-radius:10px;overflow:hidden;font-size:12px}
+  th,td{padding:7px 8px;text-align:left}
+  th{background:#133149;color:#e8f2f6;font-size:11px;letter-spacing:.5px}
   tr:nth-child(even) td{background:rgba(255,255,255,.02)}
-  .pill{padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.18)}
+  .pill{padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid rgba(255,255,255,.18)}
   .pill.on-track{background:rgba(0,167,108,.15);border-color:rgba(0,167,108,.35)}
   .pill.at-risk{background:rgba(245,197,24,.18);border-color:rgba(245,197,24,.35)}
   .pill.slipped{background:rgba(255,77,79,.18);border-color:rgba(255,77,79,.35)}
-  footer{padding:16px 24px;color:var(--sn-muted);font-size:12px}
-  .brand-bar{height:4px;background:linear-gradient(90deg,var(--sn-green), #4df3b7 60%, rgba(77,243,183,.35))}
+
+  /* Clamp long text so the layout never grows */
+  .clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .clamp-3{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* Area assignments */
+  .area-status{grid-area:status}
+  .area-glance{grid-area:glance}
+  .area-risks{grid-area:risks}
+  .area-sideA{grid-area:sideA}
+  .area-milest{grid-area:milest}
+  .area-metrics{grid-area:metrics}
+  .area-sideB{grid-area:sideB}
+
+  /* Dense lists for side panels */
+  .kv td:first-child{width:46%;;font-weight:700;background:#0f2a3e}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card" role="article" aria-label="ServiceNow POC Update">
+  <div class="canvas">
     <div class="brand-bar"></div>
     <header>
-      <div class="sn-dot" aria-hidden="true"></div>
+      <div class="sn-dot"></div>
       <div class="title">POC Update – {{PROJECT_NAME}}</div>
-      <div class="meta">
-        Period: <strong id="period">{{PERIOD}}</strong> •
-        Report Date: <strong id="report_date">{{REPORT_DATE}}</strong> •
-        Owner: <strong id="owner">{{OWNER}}</strong>
-      </div>
+      <div class="meta">Period: <strong>{{PERIOD}}</strong> • Report: <strong>{{REPORT_DATE}}</strong> • Owner: <strong>{{OWNER}}</strong></div>
     </header>
 
-    <div class="section grid two">
-      <div>
-        <h3>Overall Status</h3>
-        <span class="badge" aria-live="polite">
-          <span class="status-dot {{OVERALL_STATUS}}"></span>
-          <span id="overall_status_text">{{OVERALL_STATUS_TEXT}}</span>
-        </span>
-        <div class="callout" style="margin-top:10px">
-          <strong>Executive Summary:</strong>
-          <div id="exec_summary">{{EXECUTIVE_SUMMARY}}</div>
+    <div class="grid">
+      <!-- Overall status & summary -->
+      <div class="card area-status">
+        <div class="section">
+          <h3>Overall Status</h3>
+          <span class="badge">
+            <span class="status-dot {{OVERALL_STATUS}}"></span>
+            <span id="overall_status_text">{{OVERALL_STATUS_TEXT}}</span>
+          </span>
+          <div class="callout" style="margin-top:8px">
+            <strong>Executive Summary</strong>
+            <div id="exec_summary" class="clamp-3">{{EXECUTIVE_SUMMARY}}</div>
+          </div>
         </div>
       </div>
-      <div>
-        <h3>POC At‑a‑Glance</h3>
-        <ul class="list" id="ataglance">
-          <li><strong>Environment(s):</strong> {{ENVIRONMENTS}}</li>
-          <li><strong>Use Case(s):</strong> {{USE_CASES}}</li>
-          <li><strong>Success Criteria:</strong> {{SUCCESS_CRITERIA}}</li>
-          <li><strong>Stakeholders:</strong> {{STAKEHOLDERS}}</li>
-        </ul>
+
+      <!-- POC at-a-glance -->
+      <div class="card area-glance">
+        <div class="section">
+          <h3>POC At-a-Glance</h3>
+          <table class="kv">
+            <tr><td>Environment(s)</td><td class="clamp-2">{{ENVIRONMENTS}}</td></tr>
+            <tr><td>Use Case(s)</td><td class="clamp-2">{{USE_CASES}}</td></tr>
+            <tr><td>Success Criteria</td><td class="clamp-2">{{SUCCESS_CRITERIA}}</td></tr>
+            <tr><td>Stakeholders</td><td class="clamp-2">{{STAKEHOLDERS}}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top risks -->
+      <div class="card area-risks">
+        <div class="section">
+          <h3>Top Risks (max 3)</h3>
+          <table>
+            <thead><tr><th>Risk</th><th>Sev</th><th>Mitigation</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody id="risks_tbody">{{RISKS_ROWS}}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Side A: Action Items & Blockers (stacked) -->
+      <div class="card area-sideA">
+        <div class="section">
+          <h3>Action Items (max 4)</h3>
+          <table>
+            <thead><tr><th>Item</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody id="actions_tbody">{{ACTIONS_ROWS}}</tbody>
+          </table>
+          <div style="height:8px"></div>
+          <h3>Blockers (max 3)</h3>
+          <table>
+            <thead><tr><th>Blocker</th><th>Owner</th><th>ETA</th></tr></thead>
+            <tbody id="blockers_tbody">{{BLOCKERS_ROWS}}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Milestones -->
+      <div class="card area-milest">
+        <div class="section">
+          <h3>Milestones (max 3)</h3>
+          <table>
+            <thead><tr><th>Milestone</th><th>Target</th><th>ETA</th><th>Status</th></tr></thead>
+            <tbody id="milestones_tbody">{{MILESTONES_ROWS}}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Metrics -->
+      <div class="card area-metrics">
+        <div class="section">
+          <h3>Metrics (max 3)</h3>
+          <table>
+            <thead><tr><th>Metric</th><th>Value</th><th>Target</th><th>Note</th></tr></thead>
+            <tbody id="metrics_tbody">{{METRICS_ROWS}}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Side B: Decisions / Dependencies / Escalations (very compact) -->
+      <div class="card area-sideB">
+        <div class="section">
+          <h3>Decisions</h3>
+          <table>
+            <thead><tr><th>Decision</th><th>Date</th></tr></thead>
+            <tbody id="decisions_tbody">{{DECISIONS_ROWS}}</tbody>
+          </table>
+          <div style="height:8px"></div>
+          <h3>Dependencies</h3>
+          <table>
+            <thead><tr><th>Depends On</th><th>Status</th></tr></thead>
+            <tbody id="dependencies_tbody">{{DEPENDENCIES_ROWS}}</tbody>
+          </table>
+          <div style="height:8px"></div>
+          <h3>Escalations</h3>
+          <table>
+            <thead><tr><th>Issue</th><th>To</th></tr></thead>
+            <tbody id="escalations_tbody">{{ESCALATIONS_ROWS}}</tbody>
+          </table>
+        </div>
       </div>
     </div>
-
-    <div class="section">
-      <h3>Top Risks</h3>
-      <table aria-label="Risks">
-        <thead><tr><th>Risk</th><th>Severity</th><th>Impact</th><th>Mitigation / Next Step</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
-        <tbody id="risks_tbody">
-          <!-- <tr><td>Data access delayed</td><td>H</td><td>Blocks model eval</td><td>Escalated to IT; temp synthetic data</td><td>A. Lee</td><td>2025-08-30</td><td>open</td></tr> -->
-          {{RISKS_ROWS}}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="section grid two">
-      <div>
-        <h3>Action Items</h3>
-        <table aria-label="Action Items">
-          <thead><tr><th>Item</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
-          <tbody id="actions_tbody">
-            {{ACTION_ITEMS_ROWS}}
-          </tbody>
-        </table>
-      </div>
-      <div>
-        <h3>Blockers</h3>
-        <table aria-label="Blockers">
-          <thead><tr><th>Blocker</th><th>Owner</th><th>ETA</th></tr></thead>
-          <tbody id="blockers_tbody">
-            {{BLOCKERS_ROWS}}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="section grid two">
-      <div>
-        <h3>Milestones</h3>
-        <table aria-label="Milestones">
-          <thead><tr><th>Milestone</th><th>Target</th><th>ETA</th><th>Status</th></tr></thead>
-          <tbody id="milestones_tbody">
-            <!-- Example: <tr><td>Data ingestion live</td><td>2025-09-05</td><td>2025-09-06</td><td><span class="pill at-risk">at‑risk</span></td></tr> -->
-            {{MILESTONES_ROWS}}
-          </tbody>
-        </table>
-      </div>
-      <div>
-        <h3>Metrics</h3>
-        <table aria-label="Metrics">
-          <thead><tr><th>Metric</th><th>Value</th><th>Target</th><th>Note</th></tr></thead>
-          <tbody id="metrics_tbody">
-            {{METRICS_ROWS}}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="section grid two">
-      <div>
-        <h3>Decisions</h3>
-        <table aria-label="Decisions">
-          <thead><tr><th>Decision</th><th>Date</th><th>Owner</th><th>Note</th></tr></thead>
-          <tbody id="decisions_tbody">
-            {{DECISIONS_ROWS}}
-          </tbody>
-        </table>
-      </div>
-      <div>
-        <h3>Dependencies</h3>
-        <table aria-label="Dependencies">
-          <thead><tr><th>Depends On</th><th>Owner</th><th>Status</th></tr></thead>
-          <tbody id="dependencies_tbody">
-            {{DEPENDENCIES_ROWS}}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Escalations</h3>
-      <table aria-label="Escalations">
-        <thead><tr><th>Issue</th><th>Escalated To</th><th>Date</th><th>Note</th></tr></thead>
-        <tbody id="escalations_tbody">
-          {{ESCALATIONS_ROWS}}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="section">
-      <h3>Notes</h3>
-      <ul class="list" id="notes_list">
-        {{NOTES_LIST_ITEMS}}
-      </ul>
-    </div>
-
-    <footer>
-      ServiceNow‑styled template (unofficial). Colors approximate ServiceNow branding for internal POC updates. 
-    </footer>
   </div>
-</div>
 </body>
 </html>
