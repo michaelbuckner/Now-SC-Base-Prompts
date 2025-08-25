@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ServiceNow POC Status – Compact V3 (1080p)</title>
+<title>ServiceNow POC Status – Compact V3.1 (1080p, status-colored header)</title>
 
 <!--
-LLM fill: replace tokens {{...}} and generate <tr> rows under tbody IDs.
-This version increases canvas to 1920x1080, removes most line-clamps, and widens key columns.
-Optional: add class="dense" on <body> to slightly shrink typography and padding for extra-long content.
+LLM/Agent usage:
+- Replace tokens {{...}} and generate <tr> rows for the tbody IDs.
+- Set the <body> class to "status-{{OVERALL_STATUS}}", where OVERALL_STATUS is green | yellow | red.
+- Optional: also add "dense" to <body> to fit extra-long content, e.g. class="status-red dense".
 -->
 
 <style>
@@ -25,7 +26,14 @@ Optional: add class="dense" on <body> to slightly shrink typography and padding 
     --w:1920px;
     --h:1080px;
     --scale: calc(min(100vw / var(--w), 100vh / var(--h)));
+
+    /* Default status color; overridden by body class */
+    --status-color: var(--sn-green);
   }
+  body.status-green{ --status-color: var(--sn-green); }
+  body.status-yellow{ --status-color: var(--sn-yellow); }
+  body.status-red{ --status-color: var(--sn-red); }
+
   html,body{height:100%;margin:0}
   body{
     font: 14px/1.5 Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -46,21 +54,21 @@ Optional: add class="dense" on <body> to slightly shrink typography and padding 
     border:1px solid #143248;
     background: linear-gradient(180deg, var(--sn-surface), var(--sn-surface-2));
   }
-  .brand-bar{height:5px;background:linear-gradient(90deg,var(--sn-green), #4df3b7 60%, rgba(77,243,183,.35))}
+  .brand-bar{height:5px;background:linear-gradient(90deg,var(--status-color), rgba(77,243,183,.35))}
   header{
     display:flex;align-items:center;gap:14px;
-    padding:16px 22px;border-bottom:1px solid #143248;
-    background: linear-gradient(90deg, rgba(0,167,108,.18), transparent);
+    padding:14px 20px;border-bottom:1px solid #143248;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--status-color) 25%, transparent), transparent 60%);
   }
-  .sn-dot{width:12px;height:12px;border-radius:12px;background:var(--sn-green);box-shadow:0 0 16px rgba(0,167,108,.9)}
+  .sn-dot{width:12px;height:12px;border-radius:12px;background:var(--status-color);box-shadow:0 0 16px color-mix(in srgb, var(--status-color) 80%, transparent)}
   .title{font-size:22px;font-weight:700}
   .meta{margin-left:auto;color:var(--sn-muted);font-size:13px}
 
-  /* Layout */
+  /* Layout adjustments to avoid clipping */
   .grid{
     display:grid;
     grid-template-columns: 2.5fr 1.5fr 1.4fr;
-    grid-template-rows: auto 1.3fr 1.1fr 1fr;
+    grid-template-rows: auto 1.4fr 1.25fr 1.2fr; /* more space for middle+bottom rows */
     grid-template-areas:
       "status glance glance"
       "risks  risks  actions"
@@ -68,25 +76,26 @@ Optional: add class="dense" on <body> to slightly shrink typography and padding 
       "decdep decdep escal";
     gap:14px;
     padding:14px 18px 18px;
-    height:calc(var(--h) - 75px); /* header+bar */
+    height:calc(var(--h) - 75px);
     box-sizing:border-box;
   }
   .card{
     border:1px solid #143248;border-radius:14px;overflow:hidden;
     background:rgba(255,255,255,.02);
   }
-  .section{padding:12px 14px}
-  .section h3{margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:#d7e6eb}
-  .callout{border-left:5px solid var(--sn-green);background:rgba(0,0,0,.14);padding:10px 12px;border-radius:10px}
-  .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;font-weight:600;font-size:13px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)}
+  .section{padding:10px 12px}
+  .section h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:#d7e6eb}
+  .callout{border-left:5px solid var(--status-color);background:rgba(0,0,0,.14);padding:10px 12px;border-radius:10px}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04)}
   .status-dot{width:12px;height:12px;border-radius:50%}
   .green{background:var(--sn-green)} .yellow{background:var(--sn-yellow)} .red{background:var(--sn-red)}
 
-  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #143248;border-radius:12px;overflow:hidden;font-size:13px;table-layout:fixed}
-  th,td{padding:8px 10px;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:normal}
-  th{background:#133149;color:#e8f2f6;font-size:12px;letter-spacing:.5px}
+  /* Tighter table spacing to fit more lines without clipping */
+  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #143248;border-radius:12px;overflow:hidden;font-size:12.5px;table-layout:fixed}
+  th,td{padding:6px 8px;text-align:left;vertical-align:top;overflow-wrap:anywhere;word-break:normal}
+  th{background:#133149;color:#e8f2f6;font-size:11.5px;letter-spacing:.5px}
   tr:nth-child(even) td{background:rgba(255,255,255,.02)}
-  .pill{padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid rgba(255,255,255,.18);white-space:nowrap}
+  .pill{padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid rgba(255,255,255,.18);white-space:nowrap}
   .pill.on-track{background:rgba(0,167,108,.15);border-color:rgba(0,167,108,.35)}
   .pill.at-risk{background:rgba(245,197,24,.18);border-color:rgba(245,197,24,.35)}
   .pill.slipped{background:rgba(255,77,79,.18);border-color:rgba(255,77,79,.35)}
@@ -102,39 +111,40 @@ Optional: add class="dense" on <body> to slightly shrink typography and padding 
   .area-escal{grid-area:escal}
 
   /* Key-value look for glance */
-  .kv td:first-child{width:34%;font-weight:700;background:#0f2a3e}
+  .kv td:first-child{width:30%;font-weight:700;background:#0f2a3e}
 
-  /* Wider columns to avoid clipping */
-  colgroup.risks col:nth-child(1){width:34%}
-  colgroup.risks col:nth-child(2){width:7%}
-  colgroup.risks col:nth-child(3){width:34%}  /* mitigation widened */
+  /* Column widths tuned for less wrapping */
+  colgroup.risks col:nth-child(1){width:32%}
+  colgroup.risks col:nth-child(2){width:8%}
+  colgroup.risks col:nth-child(3){width:36%}  /* mitigation wide */
   colgroup.risks col:nth-child(4){width:10%}
   colgroup.risks col:nth-child(5){width:8%}
-  colgroup.risks col:nth-child(6){width:7%}
+  colgroup.risks col:nth-child(6){width:6%}
 
-  colgroup.actions col:nth-child(1){width:55%}
-  colgroup.actions col:nth-child(2){width:17%}
-  colgroup.actions col:nth-child(3){width:13%}
-  colgroup.actions col:nth-child(4){width:15%}
+  colgroup.actions col:nth-child(1){width:56%}
+  colgroup.actions col:nth-child(2){width:16%}
+  colgroup.actions col:nth-child(3){width:12%}
+  colgroup.actions col:nth-child(4){width:16%}
 
   colgroup.milestones col:nth-child(1){width:48%}
   colgroup.milestones col:nth-child(2){width:16%}
   colgroup.milestones col:nth-child(3){width:16%}
   colgroup.milestones col:nth-child(4){width:20%}
 
-  colgroup.metrics col:nth-child(1){width:32%}
+  colgroup.metrics col:nth-child(1){width:28%}
   colgroup.metrics col:nth-child(2){width:18%}
   colgroup.metrics col:nth-child(3){width:18%}
-  colgroup.metrics col:nth-child(4){width:32%}
+  colgroup.metrics col:nth-child(4){width:36%} /* more width for note to reduce wrap */
+  
+  colgroup.decisions col:nth-child(1){width:80%}
+  colgroup.decisions col:nth-child(2){width:20%}
 
-  colgroup.decisions col:nth-child(1){width:78%}
-  colgroup.decisions col:nth-child(2){width:22%}
-
-  colgroup.deps col:nth-child(1){width:72%}
-  colgroup.deps col:nth-child(2){width:28%}
+  colgroup.deps col:nth-child(1){width:74%}
+  colgroup.deps col:nth-child(2){width:26%}
 </style>
 </head>
-<body class="{{BODY_CLASS}}">
+<!-- Set status class here: status-green | status-yellow | status-red; add 'dense' for extra content -->
+<body class="status-{{OVERALL_STATUS}} {{BODY_DENSITY}}">
   <div class="canvas">
     <div class="brand-bar"></div>
     <header>
